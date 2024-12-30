@@ -1,0 +1,77 @@
+---
+title: "Laptops Data"
+output: 
+  flexdashboard::flex_dashboard:
+    orientation: columns
+    vertical_layout: fill
+---
+
+```{r setup, include=FALSE}
+#Calling libraries whose packages are installed
+library(tidyverse)
+library(flexdashboard)
+library(gt)
+library(htmltools)
+library(viridisLite)
+library(viridis)
+library(dplyr)
+library(plotly)
+library(highcharter)
+library(dplyr)
+library(ggplot2)
+library(plotly)
+# Calling the variable and store all the data set in it.
+df <- read.csv("Laptops.csv")
+brand <- c()
+for (i in df$name) {
+  brand <- c(brand, paste(toupper(substring(strsplit(i, " ")[[1]][1], 1, 1)), substring(strsplit(i, " ")[[1]][1], 2), sep = ""))
+}
+df$brand <- brand
+```
+
+Column {data-width=650}
+-----------------------------------------------------------------------
+
+### Laptop Sale(Brand Rating) 
+
+```{r}
+plot_ly(df, labels = ~brand, values = ~rating, type = 'pie', marker = list(colors = colors), textinfo = "percent+label") %>%
+  layout(title = "Brand Ratings", font = list(size = 8, color = "black"), paper_bgcolor = "white", plot_bgcolor = "white")
+
+```
+Column {data-width=325}
+-----------------------------------------------------------------------
+### Top selling Brands
+
+```{r}
+df %>%
+  count(brand) %>%
+  arrange(desc(n)) %>%
+  slice_head(n = 5) %>%
+  ggplot(aes(x = brand, y = n, fill = brand, size = n)) +
+  geom_point(alpha = 0.7) +
+  scale_fill_brewer(palette = 'Paired') +
+  labs(title = "Top 5 Brands by Count", x = "Brand", y = "Count", size = "Count") +
+  theme(axis.text.x = element_text(angle = 45, vjust = 0.5, hjust=1)) -> p
+
+ggplotly(p)
+```
+
+
+
+### Best Laptop Display 
+
+```{r}
+df %>%
+  count(display.in.inch.) %>%
+  arrange(desc(n)) %>%
+  slice_head(n = 5) %>%
+  mutate(display.in.inch. = factor(display.in.inch.)) %>% # convert to factor
+  ggplot(aes(x = display.in.inch., y = n, fill = display.in.inch.)) +
+  geom_bar(stat = 'identity') +
+  scale_fill_brewer(palette = 'Spectral') +
+  labs(title = "Top 10 Display Sizes by Count", x = "Display (inches)", y = "Count")
+```
+
+
+

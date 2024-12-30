@@ -1,0 +1,66 @@
+---
+title: "Worlds Population and Sucide Data "
+output: 
+  flexdashboard::flex_dashboard:
+    orientation: columns
+    vertical_layout: fill
+---
+
+```{r setup, include=FALSE}
+library(tidyverse)
+library(flexdashboard)
+library(gt)
+library(htmltools)
+library(viridisLite)
+library(viridis)
+library(dplyr)
+library(plotly)
+library(highcharter)
+```
+
+```{r}
+data <- read.csv("SucideData.csv")
+```
+
+## Column {data-width="350"}
+
+### Generation gap along with Years
+
+```{r}
+custom_colors <- c("#1f77b4", "#ff7f0e", "#2ca02c", "#d62728", "#9467bd")
+
+plot_ly(
+  data, 
+  labels = ~country, 
+  values = ~suicides_no, 
+  type = 'pie',
+  marker = list(colors = custom_colors)
+)
+
+```
+
+## Column {data-width="350"}
+
+### Country wise GDP_per_Capita Graph
+
+```{r}
+plot_ly(data, x = data$country, y = data$gdp_per_capita, type = 'box')
+```
+
+### Suicides by Country
+
+```{r}
+custom_colors <- viridis::mako(n = 15)
+country_tibble <- data %>%
+  select(country, suicides_no, population) %>%
+  group_by(country) %>%
+  summarize(suicide_capita = round((sum(suicides_no)/sum(population))*100000, 2))
+
+# Create interactive world map.
+highchart() %>%
+hc_add_series_map(worldgeojson, country_tibble, value = "suicide_capita", joinBy = c('name','country'))  %>% 
+    hc_colorAxis(stops = color_stops()) %>% 
+    hc_title(text = "Suicides by Country") %>% 
+    hc_subtitle(text = "1985-2015") %>%
+    hc_tooltip(borderWidth = 1.5, headerFormat = "", valueSuffix = " suicides (per 100K people)")
+```

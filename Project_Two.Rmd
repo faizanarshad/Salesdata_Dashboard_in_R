@@ -1,0 +1,78 @@
+---
+title: "Worlds Population and Sucide Data "
+output: 
+  flexdashboard::flex_dashboard:
+    orientation: columns
+    vertical_layout: fill
+---
+
+```{r setup, include=FALSE}
+library(tidyverse)
+library(flexdashboard)
+library(gt)
+library(htmltools)
+library(viridisLite)
+library(viridis)
+library(dplyr)
+library(plotly)
+library(highcharter)
+```
+
+```{r}
+data <- read.csv("SucideData.csv")
+```
+
+Column {data-width=350}
+-----------------------------------------------------------------------
+
+###  Total Suicides Trend by Sex 
+
+```{r}
+
+pie_chart <- plot_ly(data, labels = ~sex, values = ~suicides_no, type = 'pie', 
+                     marker = list(colors = c("blue", "red", "green", "orange", "purple", "brown")))
+
+# Add chart title
+pie_chart <- pie_chart %>% 
+  layout(title = "Suicides by Sex")
+
+# Display pie chart
+pie_chart
+
+
+```
+
+Column {data-width=350}
+-----------------------------------------------------------------------
+
+### Sucide trends by Age
+
+```{r}
+# Create scatter plot
+scatter_plot <- plot_ly(data, x = data$age, y = data$suicides.100k.pop, type = 'scatter', mode = 'markers')
+
+# Add chart title and axis labels
+scatter_plot <- scatter_plot %>% 
+  layout(title = "Sucide trends by Age",
+         xaxis = list(title = "Age"),
+         yaxis = list(title = "suicides.100k.pop"))
+scatter_plot
+```
+
+### Suicides by Country
+
+```{r}
+# Create bar chart with color scale
+bar_chart <- plot_ly(data, x = ~population, y = ~suicides_no, type = 'bar',
+                     marker = list(color = ~population, colorscale = 'Viridis'))
+
+# Add chart title and axis labels
+bar_chart <- bar_chart %>% 
+  layout(title = "Suicides by Population",
+         xaxis = list(title = "Population"),
+         yaxis = list(title = "Suicides"))
+
+# Display bar chart
+bar_chart
+```
+

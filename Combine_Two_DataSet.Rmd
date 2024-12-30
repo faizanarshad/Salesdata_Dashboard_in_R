@@ -1,0 +1,78 @@
+---
+title: "Combine two Different Datasets in a single dashboard"
+output: 
+  flexdashboard::flex_dashboard:
+    orientation: columns
+    vertical_layout: fill
+---
+
+```{r setup, include=FALSE}
+library(tidyverse)
+library(flexdashboard)
+library(gt)
+library(htmltools)
+library(viridisLite)
+library(viridis)
+library(dplyr)
+library(plotly)
+library(highcharter)
+library(dplyr)
+library(ggplot2)
+library(plotly)
+```
+```{r}
+data <- read.csv("SucideData.csv")
+df <- read.csv("Laptops.csv")
+brand <- c()
+for (i in df$name) {
+  brand <- c(brand, paste(toupper(substring(strsplit(i, " ")[[1]][1], 1, 1)), substring(strsplit(i, " ")[[1]][1], 2), sep = ""))
+}
+df$brand <- brand
+```
+
+Column {data-width=650}
+-----------------------------------------------------------------------
+
+### Top Selling Laptop Brands Rating
+
+```{r}
+plot_ly(df, labels = ~brand, values = ~rating, type = 'pie', marker = list(colors = colors), textinfo = "percent+label") %>%
+  layout(title = "Brand Ratings", font = list(size = 8, color = "black"), paper_bgcolor = "white", plot_bgcolor = "white")
+
+```
+
+Column {data-width=350}
+-----------------------------------------------------------------------
+
+### Countary Wise Sucide Data
+
+```{r}
+custom_colors <- viridis::mako(n = 15)
+country_tibble <- data %>%
+  select(country, suicides_no, population) %>%
+  group_by(country) %>%
+  summarize(suicide_capita = round((sum(suicides_no)/sum(population))*100000, 2))
+
+# Create interactive world map.
+highchart() %>%
+hc_add_series_map(worldgeojson, country_tibble, value = "suicide_capita", joinBy = c('name','country'))  %>% 
+    hc_colorAxis(stops = color_stops()) %>% 
+    hc_title(text = "Suicides by Country") %>% 
+    hc_subtitle(text = "1985-2015") %>%
+    hc_tooltip(borderWidth = 1.5, headerFormat = "", valueSuffix = " suicides (per 100K people)")
+```
+
+### Best Display Sizes 
+
+```{r}
+df %>%
+  count(display.in.inch.) %>%
+  arrange(desc(n)) %>%
+  slice_head(n = 5) %>%
+  mutate(display.in.inch. = factor(display.in.inch.)) %>% # convert to factor
+  ggplot(aes(x = display.in.inch., y = n, fill = display.in.inch.)) +
+  geom_bar(stat = 'identity') +
+  scale_fill_brewer(palette = 'Spectral') +
+  labs(title = "Top 10 Display Sizes by Count", x = "Display (inches)", y = "Count")
+```
+
