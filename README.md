@@ -123,6 +123,11 @@ rmarkdown::render("Laptop_Story_Enhanced.Rmd")
 ## 📈 Dashboard Features
 
 ### Suicide Data Analysis Dashboard (`Suicide_Data_Analysis.Rmd`)
+
+![Suicide Data Analysis Dashboard](screenshots/Suicide%20Data.png)
+
+*Comprehensive suicide data analysis dashboard featuring global overview, country-wise analysis, gender distribution, age group trends, and economic factors visualization*
+
 - **Global Suicide Overview**: Key metrics and statistics
 - **Top Countries by Total Suicides**: Interactive horizontal bar chart
 - **Suicide Rate Trends Over Time**: Time series analysis with trend lines
@@ -134,6 +139,11 @@ rmarkdown::render("Laptop_Story_Enhanced.Rmd")
 - **Statistical Summary**: Comprehensive analysis by gender and age
 
 ### Enhanced Laptop Data Dashboard (`Laptop_Story_Enhanced.Rmd`)
+
+![Laptop Data Analysis Dashboard](screenshots/Laptop%20Data.png)
+
+*Enhanced laptop data analysis dashboard featuring 3D visualizations, interactive heatmaps, bubble charts, and advanced styling with modern gradients*
+
 - **3D Scatter Plots**: Price vs Rating vs RAM relationships
 - **Interactive Heatmaps**: Brand performance visualization
 - **Bubble Charts**: Multi-dimensional data representation
