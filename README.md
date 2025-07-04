@@ -12,16 +12,18 @@ This project demonstrates advanced data visualization techniques in R, combining
 
 ### Interactive Visualizations
 - **Pie Charts**: Brand ratings and suicide distribution by sex
-- **Scatter Plots**: Suicide trends by age groups
-- **Bar Charts**: Population vs suicide rates and display size distributions
-- **World Maps**: Country-wise suicide data visualization
+- **Scatter Plots**: Suicide trends by age groups and GDP relationships
+- **Bar Charts**: Population vs suicide rates, display size distributions, and decade analysis
+- **Heatmaps**: Country-wise suicide data visualization by decade
 - **Interactive Plots**: Using Plotly and Highcharter libraries
+- **Enhanced Styling**: Custom CSS with gradients, animations, and modern design
 
 ### Dashboard Components
 - **Flexdashboard**: Responsive layout with multiple columns
 - **Real-time Data Processing**: Dynamic data manipulation and visualization
 - **Color-coded Visualizations**: Using Viridis color palettes
 - **Responsive Design**: Adapts to different screen sizes
+- **Custom CSS Styling**: Modern gradients, hover effects, and animations
 
 ## 📁 Project Structure
 
@@ -30,14 +32,14 @@ Salesdata_Dashboard_in_R/
 ├── README.md                           # This file
 ├── SucideData.csv                      # Global suicide statistics dataset
 ├── laptops.csv                         # Laptop specifications and ratings dataset
-├── Project_Two.Rmd                     # Suicide data analysis dashboard
-├── Project_Two.html                    # Compiled HTML version
-├── Combine_Two_DataSet.Rmd             # Combined dataset dashboard
-├── Combine_Two_Dataset.html            # Compiled HTML version
-├── Worlds Population and Sucide Data_2.Rmd  # Laptop data analysis dashboard
-├── Worlds Population and Sucide Data_2.html # Compiled HTML version
-├── Worlds Population and Sucide Data.Rmd    # Additional suicide analysis
-└── Worlds Population and Sucide Data.html   # Compiled HTML version
+├── Suicide_Data_Analysis.Rmd           # Comprehensive suicide data analysis dashboard
+├── Suicide_Data_Analysis.html          # Compiled HTML version
+├── suicide_styles.css                  # Custom CSS styling for suicide dashboard
+├── Laptop_Story_Enhanced.Rmd           # Enhanced laptop data analysis dashboard
+├── Laptop_Story_Enhanced.html          # Compiled HTML version
+├── enhanced_styles.css                 # Custom CSS styling for laptop dashboard
+├── Combine_Two_DataSet.html            # Combined dataset dashboard (HTML)
+└── Project_Two.html                    # Original suicide analysis (HTML)
 ```
 
 ## 📊 Datasets
@@ -50,7 +52,7 @@ Contains global suicide statistics with the following variables:
 - `age`: Age group categories
 - `suicides_no`: Number of suicides
 - `population`: Population count
-- `suicides/100k pop`: Suicide rate per 100,000 population
+- `suicides.100k.pop`: Suicide rate per 100,000 population
 - `gdp_per_capita`: GDP per capita
 - `generation`: Generation classification
 
@@ -86,7 +88,9 @@ install.packages(c(
   "dplyr",
   "plotly",
   "highcharter",
-  "ggplot2"
+  "ggplot2",
+  "scales",
+  "RColorBrewer"
 ))
 ```
 
@@ -100,65 +104,90 @@ install.packages(c(
 ## 🚀 Usage
 
 ### Running Individual Dashboards
-1. **Suicide Data Analysis**: Open `Project_Two.Rmd`
-2. **Combined Dataset Analysis**: Open `Combine_Two_DataSet.Rmd`
-3. **Laptop Data Analysis**: Open `Worlds Population and Sucide Data_2.Rmd`
+1. **Comprehensive Suicide Analysis**: Open `Suicide_Data_Analysis.Rmd`
+2. **Enhanced Laptop Analysis**: Open `Laptop_Story_Enhanced.Rmd`
+3. **Combined Dataset Analysis**: Open `Combine_Two_DataSet.html` (pre-rendered)
 
 ### Generating HTML Output
 ```r
 # In RStudio, click the "Knit" button
 # Or use the command line:
-rmarkdown::render("Project_Two.Rmd")
-rmarkdown::render("Combine_Two_DataSet.Rmd")
-rmarkdown::render("Worlds Population and Sucide Data_2.Rmd")
+rmarkdown::render("Suicide_Data_Analysis.Rmd")
+rmarkdown::render("Laptop_Story_Enhanced.Rmd")
 ```
 
 ## 📈 Dashboard Features
 
-### Project Two Dashboard
-- **Total Suicides Trend by Sex**: Interactive pie chart showing suicide distribution
-- **Suicide Trends by Age**: Scatter plot of suicide rates vs age groups
-- **Suicides by Country**: Bar chart of population vs suicide numbers
+### Suicide Data Analysis Dashboard (`Suicide_Data_Analysis.Rmd`)
+- **Global Suicide Overview**: Key metrics and statistics
+- **Top Countries by Total Suicides**: Interactive horizontal bar chart
+- **Suicide Rate Trends Over Time**: Time series analysis with trend lines
+- **Gender Analysis**: Donut chart showing suicide distribution by sex
+- **Suicide by Age Group**: Bar chart of suicide rates across age groups
+- **Economic Factors Analysis**: Scatter plot of GDP vs suicide rates
+- **Decade Analysis**: Temporal trends across different decades
+- **Geographic Heatmap**: Country-wise suicide rates by decade
+- **Statistical Summary**: Comprehensive analysis by gender and age
+
+### Enhanced Laptop Data Dashboard (`Laptop_Story_Enhanced.Rmd`)
+- **3D Scatter Plots**: Price vs Rating vs RAM relationships
+- **Interactive Heatmaps**: Brand performance visualization
+- **Bubble Charts**: Multi-dimensional data representation
+- **Radar Charts**: Brand comparison across multiple metrics
+- **Advanced Styling**: Modern gradients and animations
 
 ### Combined Dataset Dashboard
 - **Top Selling Laptop Brands Rating**: Pie chart of brand ratings
 - **Country-wise Suicide Data**: Interactive world map with suicide rates
 - **Best Display Sizes**: Bar chart of popular laptop display sizes
 
-### Laptop Data Dashboard
-- **Laptop Sale (Brand Rating)**: Pie chart of brand ratings
-- **Top Selling Brands**: Interactive scatter plot of top brands
-- **Best Laptop Display**: Bar chart of display size distribution
-
 ## 🎨 Visualization Libraries Used
 
-- **Plotly**: Interactive plots and charts
+- **Plotly**: Interactive plots and charts with hover effects
 - **Highcharter**: Interactive maps and advanced charts
-- **ggplot2**: Static visualizations
-- **Viridis**: Color palettes for accessibility
+- **ggplot2**: Static visualizations with enhanced themes
+- **Viridis**: Color palettes for accessibility and aesthetics
 - **Flexdashboard**: Dashboard layout and structure
+- **Custom CSS**: Modern styling with gradients and animations
 
 ## 📝 Key Insights
 
 ### Suicide Data Analysis
-- Gender-based suicide patterns
-- Age group vulnerability analysis
-- Geographic distribution of suicide rates
-- Temporal trends over 30 years
+- **Gender Disparity**: Males consistently show higher suicide rates than females across all age groups
+- **Age Vulnerability**: Middle-aged adults (35-54 years) show the highest suicide rates
+- **Geographic Patterns**: Significant variations in suicide rates across countries and regions
+- **Economic Factors**: Complex relationship between GDP and suicide rates
+- **Temporal Trends**: Changing patterns across decades indicating social and policy impacts
 
 ### Laptop Market Analysis
-- Brand popularity and ratings
-- Price-performance relationships
-- Display size preferences
-- Market trends and consumer behavior
+- **Brand Performance**: Clear differences in ratings and popularity across brands
+- **Price-Performance**: Relationship between laptop specifications and pricing
+- **Consumer Preferences**: Display size and storage preferences
+- **Market Trends**: Evolution of laptop specifications over time
+
+## 🎨 Design Features
+
+### Enhanced Styling
+- **Gradient Backgrounds**: Modern color schemes with smooth transitions
+- **Hover Effects**: Interactive elements with smooth animations
+- **Custom Animations**: Fade-in effects and pulse animations
+- **Responsive Design**: Adapts to different screen sizes and devices
+- **Professional Typography**: Clean, readable fonts with proper hierarchy
+
+### Interactive Elements
+- **Hover Information**: Detailed tooltips with additional data
+- **Zoom and Pan**: Interactive chart controls
+- **Color-coded Visualizations**: Consistent color schemes across charts
+- **Dynamic Updates**: Real-time data processing and visualization
 
 ## 🤝 Contributing
 
 Feel free to contribute to this project by:
-- Adding new visualizations
-- Improving data analysis
-- Enhancing dashboard layouts
-- Adding new datasets
+- Adding new visualizations and chart types
+- Improving data analysis and statistical insights
+- Enhancing dashboard layouts and user experience
+- Adding new datasets and analysis perspectives
+- Improving CSS styling and animations
 
 ## 📄 License
 
@@ -170,4 +199,4 @@ Created as a data visualization project demonstrating R's capabilities in creati
 
 ---
 
-**Note**: This project is for educational and demonstration purposes. The suicide data should be handled with sensitivity and used responsibly for research and awareness purposes.
+**Note**: This project is for educational and demonstration purposes. The suicide data should be handled with sensitivity and used responsibly for research and awareness purposes. The visualizations are designed to provide insights while maintaining appropriate sensitivity to the subject matter.
