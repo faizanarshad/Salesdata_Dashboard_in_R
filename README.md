@@ -2,7 +2,6 @@
 
 A comprehensive data visualization project that combines multiple datasets to create interactive dashboards using R Markdown and Flexdashboard. This project analyzes both suicide data and laptop sales data, providing insights through various interactive visualizations.
 
-![Dashboard Screenshot](dashboard_screenshot.png)
 
 *Screenshot of the Suicide Data Analysis Dashboard showing interactive visualizations and modern styling*
 
