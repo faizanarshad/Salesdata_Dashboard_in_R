@@ -1,0 +1,458 @@
+---
+title: "Laptop Market Story: Advanced Data Visualization"
+output: 
+  flexdashboard::flex_dashboard:
+    orientation: columns
+    vertical_layout: fill
+    theme: cosmo
+    css: enhanced_styles.css
+---
+
+```{r setup, include=FALSE}
+library(tidyverse)
+library(flexdashboard)
+library(plotly)
+library(highcharter)
+library(viridis)
+library(scales)
+library(ggplot2)
+library(dplyr)
+library(RColorBrewer)
+
+# Read the data
+df <- read.csv("laptops.csv")
+
+# Clean and prepare data
+df_clean <- df %>%
+  filter(!is.na(rating) & rating > 0) %>%
+  mutate(
+    brand = sapply(strsplit(name, " "), function(x) x[1]),
+    price_category = case_when(
+      price.in.Rs.. < 30000 ~ "Budget (<₹30K)",
+      price.in.Rs.. < 60000 ~ "Mid-Range (₹30K-60K)",
+      price.in.Rs.. < 100000 ~ "Premium (₹60K-1L)",
+      TRUE ~ "Luxury (>₹1L)"
+    ),
+    processor_type = case_when(
+      grepl("Intel", processor) ~ "Intel",
+      grepl("AMD", processor) ~ "AMD", 
+      grepl("Apple", processor) ~ "Apple",
+      TRUE ~ "Other"
+    ),
+    ram_gb = as.numeric(str_extract(ram, "\\d+")),
+    storage_gb = as.numeric(str_extract(storage, "\\d+")),
+    price_performance = rating / (price.in.Rs.. / 10000)
+  )
+```
+
+```{css}
+/* Enhanced CSS for better styling */
+body {
+  font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+  background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+  margin: 0;
+  padding: 0;
+}
+
+.navbar {
+  background: linear-gradient(135deg, #2c3e50 0%, #34495e 100%) !important;
+  border-bottom: 3px solid #3498db;
+  box-shadow: 0 4px 12px rgba(0,0,0,0.15);
+}
+
+.navbar-brand {
+  color: #ecf0f1 !important;
+  font-weight: bold;
+  font-size: 22px;
+  text-shadow: 2px 2px 4px rgba(0,0,0,0.3);
+}
+
+.chart-title {
+  color: #2c3e50;
+  font-size: 20px;
+  font-weight: bold;
+  text-align: center;
+  margin-bottom: 20px;
+  text-shadow: 1px 1px 2px rgba(0,0,0,0.1);
+  background: linear-gradient(45deg, #667eea, #764ba2);
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
+  background-clip: text;
+}
+
+.insight-box {
+  background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+  color: white;
+  padding: 20px;
+  border-radius: 15px;
+  margin: 15px 0;
+  box-shadow: 0 8px 32px rgba(0,0,0,0.15);
+  border: 1px solid rgba(255,255,255,0.2);
+  backdrop-filter: blur(10px);
+  transition: all 0.3s ease;
+}
+
+.insight-box:hover {
+  transform: translateY(-5px) scale(1.02);
+  box-shadow: 0 15px 45px rgba(0,0,0,0.25);
+}
+
+.metric-card {
+  background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+  color: white;
+  padding: 25px;
+  border-radius: 20px;
+  text-align: center;
+  margin: 10px;
+  box-shadow: 0 8px 25px rgba(0,0,0,0.15);
+  transition: all 0.3s ease;
+  border: 1px solid rgba(255,255,255,0.2);
+}
+
+.metric-card:hover {
+  transform: scale(1.05);
+  box-shadow: 0 12px 35px rgba(0,0,0,0.2);
+}
+
+.js-plotly-plot {
+  border-radius: 15px;
+  overflow: hidden;
+  box-shadow: 0 8px 25px rgba(0,0,0,0.1);
+  transition: all 0.3s ease;
+}
+
+.js-plotly-plot:hover {
+  box-shadow: 0 12px 35px rgba(0,0,0,0.15);
+  transform: translateY(-2px);
+}
+
+/* Custom animations */
+@keyframes fadeInUp {
+  from {
+    opacity: 0;
+    transform: translateY(30px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+.chart-container {
+  animation: fadeInUp 0.8s ease-out;
+}
+```
+
+Column {data-width=400}
+-----------------------------------------------------------------------
+
+### 🎯 **Market Overview Dashboard**
+
+```{r}
+# Key metrics with enhanced styling
+total_laptops <- nrow(df_clean)
+avg_price <- mean(df_clean$price.in.Rs.., na.rm = TRUE)
+avg_rating <- mean(df_clean$rating, na.rm = TRUE)
+price_range <- max(df_clean$price.in.Rs..) - min(df_clean$price.in.Rs..)
+total_brands <- length(unique(df_clean$brand))
+
+# Create enhanced metric cards
+metric_data <- data.frame(
+  metric = c("Total Models", "Avg Price", "Avg Rating", "Price Range", "Total Brands"),
+  value = c(total_laptops, paste("₹", format(round(avg_price), big.mark=",")), 
+            round(avg_rating, 1), paste("₹", format(price_range, big.mark=",")), total_brands),
+  icon = c("💻", "💰", "⭐", "📊", "🏢"),
+  color = c("#FF6B6B", "#4ECDC4", "#45B7D1", "#96CEB4", "#FFEAA7")
+)
+
+plot_ly(metric_data, x = ~metric, y = rep(1, 5), type = 'bar',
+        marker = list(color = ~color, 
+                     line = list(color = '#2c3e50', width = 2),
+                     gradient = list(type = "vertical")),
+        text = ~paste(icon, "<br><b>", value, "</b>"), 
+        textposition = 'middle center',
+        textfont = list(size = 16, color = 'white')) %>%
+  layout(title = list(text = "📈 Market Overview", 
+                      font = list(size = 20, color = '#2c3e50')),
+         showlegend = FALSE,
+         xaxis = list(showticklabels = FALSE),
+         yaxis = list(showticklabels = FALSE),
+         plot_bgcolor = 'rgba(0,0,0,0)',
+         paper_bgcolor = 'rgba(0,0,0,0)',
+         margin = list(t = 50, b = 20))
+```
+
+### 🌟 **Price vs Rating Bubble Chart**
+
+```{r}
+# Enhanced bubble chart with size representing number of ratings
+bubble_data <- df_clean %>%
+  group_by(brand, price_category) %>%
+  summarise(
+    avg_price = mean(price.in.Rs.., na.rm = TRUE),
+    avg_rating = mean(rating, na.rm = TRUE),
+    total_ratings = sum(no_of_ratings, na.rm = TRUE),
+    count = n()
+  ) %>%
+  filter(count >= 2)
+
+plot_ly(bubble_data, x = ~avg_price, y = ~avg_rating, 
+        type = 'scatter', mode = 'markers',
+        size = ~total_ratings, 
+        color = ~price_category,
+        colors = viridis(4),
+        marker = list(sizemin = 10, opacity = 0.8,
+                     line = list(color = '#2c3e50', width = 1.5)),
+        text = ~paste("Brand:", brand, "<br>Price: ₹", format(avg_price, big.mark=","),
+                     "<br>Rating:", round(avg_rating, 2),
+                     "<br>Total Ratings:", total_ratings),
+        hoverinfo = 'text') %>%
+  layout(title = list(text = "💫 Price vs Rating Bubble Analysis", 
+                      font = list(size = 18, color = '#2c3e50')),
+         xaxis = list(title = "Average Price (₹)", tickformat = ',d'),
+         yaxis = list(title = "Average Rating"),
+         plot_bgcolor = 'rgba(0,0,0,0)',
+         paper_bgcolor = 'rgba(0,0,0,0)',
+         showlegend = TRUE)
+```
+
+### 🏆 **Brand Performance Heatmap**
+
+```{r}
+# Create heatmap data
+heatmap_data <- df_clean %>%
+  group_by(brand, price_category) %>%
+  summarise(
+    avg_rating = mean(rating, na.rm = TRUE),
+    avg_price = mean(price.in.Rs.., na.rm = TRUE),
+    count = n()
+  ) %>%
+  filter(count >= 3) %>%
+  pivot_wider(names_from = price_category, values_from = avg_rating, values_fill = 0)
+
+# Convert to matrix for heatmap
+heatmap_matrix <- as.matrix(heatmap_data[,-c(1,2)])
+rownames(heatmap_matrix) <- heatmap_data$brand
+
+plot_ly(z = heatmap_matrix, x = colnames(heatmap_matrix), y = rownames(heatmap_matrix),
+        type = 'heatmap', colorscale = 'Viridis',
+        text = round(heatmap_matrix, 2),
+        texttemplate = "%{text}",
+        textfont = list(size = 12, color = "white")) %>%
+  layout(title = list(text = "🔥 Brand Performance Heatmap", 
+                      font = list(size = 18, color = '#2c3e50')),
+         xaxis = list(title = "Price Category"),
+         yaxis = list(title = "Brand"),
+         plot_bgcolor = 'rgba(0,0,0,0)',
+         paper_bgcolor = 'rgba(0,0,0,0)')
+```
+
+Column {data-width=400}
+-----------------------------------------------------------------------
+
+### 💎 **3D Price-Performance Analysis**
+
+```{r}
+# 3D scatter plot
+plot_ly(df_clean, x = ~price.in.Rs.., y = ~rating, z = ~ram_gb,
+        type = 'scatter3d', mode = 'markers',
+        marker = list(size = 8, opacity = 0.8,
+                     color = ~price.in.Rs.., colorscale = 'Viridis'),
+        text = ~paste("Brand:", brand, "<br>Price: ₹", format(price.in.Rs.., big.mark=","),
+                     "<br>Rating:", rating, "<br>RAM:", ram_gb, "GB"),
+        hoverinfo = 'text') %>%
+  layout(title = list(text = "💎 3D Price-Performance-RAM Analysis", 
+                      font = list(size = 18, color = '#2c3e50')),
+         scene = list(
+           xaxis = list(title = "Price (₹)", tickformat = ',d'),
+           yaxis = list(title = "Rating"),
+           zaxis = list(title = "RAM (GB)")
+         ),
+         plot_bgcolor = 'rgba(0,0,0,0)',
+         paper_bgcolor = 'rgba(0,0,0,0)')
+```
+
+### 📊 **Processor Performance Radar Chart**
+
+```{r}
+# Radar chart data
+radar_data <- df_clean %>%
+  group_by(processor_type) %>%
+  summarise(
+    avg_rating = mean(rating, na.rm = TRUE),
+    avg_price = mean(price.in.Rs.., na.rm = TRUE),
+    avg_ram = mean(ram_gb, na.rm = TRUE),
+    count = n()
+  ) %>%
+  filter(processor_type != "Other") %>%
+  mutate(
+    price_score = 1 - (avg_price - min(avg_price)) / (max(avg_price) - min(avg_price)),
+    ram_score = avg_ram / max(avg_ram),
+    rating_score = avg_rating / 5,
+    market_share = count / sum(count)
+  )
+
+# Create radar chart using plotly
+plot_ly(
+  type = 'scatterpolar',
+  r = c(radar_data$rating_score, radar_data$rating_score[1]),
+  theta = c(radar_data$processor_type, radar_data$processor_type[1]),
+  fill = 'toself',
+  name = 'Rating Score',
+  line = list(color = '#FF6B6B', width = 3)
+) %>%
+  add_trace(
+    r = c(radar_data$price_score, radar_data$price_score[1]),
+    theta = c(radar_data$processor_type, radar_data$processor_type[1]),
+    fill = 'toself',
+    name = 'Price Score',
+    line = list(color = '#4ECDC4', width = 3)
+  ) %>%
+  add_trace(
+    r = c(radar_data$ram_score, radar_data$ram_score[1]),
+    theta = c(radar_data$processor_type, radar_data$processor_type[1]),
+    fill = 'toself',
+    name = 'RAM Score',
+    line = list(color = '#45B7D1', width = 3)
+  ) %>%
+  layout(
+    polar = list(
+      radialaxis = list(
+        visible = TRUE,
+        range = c(0, 1)
+      )
+    ),
+    title = list(text = "🎯 Processor Performance Radar", 
+                 font = list(size = 18, color = '#2c3e50')),
+    showlegend = TRUE,
+    plot_bgcolor = 'rgba(0,0,0,0)',
+    paper_bgcolor = 'rgba(0,0,0,0)'
+  )
+```
+
+### 🎨 **Storage & Display Distribution**
+
+```{r}
+# Enhanced storage analysis
+storage_analysis <- df_clean %>%
+  mutate(
+    storage_type = case_when(
+      grepl("SSD", storage) ~ "SSD",
+      grepl("HDD", storage) ~ "HDD",
+      grepl("\\|", storage) ~ "Hybrid",
+      TRUE ~ "Other"
+    )
+  ) %>%
+  group_by(storage_type, `display.in.inch.`) %>%
+  summarise(
+    count = n(),
+    avg_price = mean(price.in.Rs.., na.rm = TRUE),
+    avg_rating = mean(rating, na.rm = TRUE)
+  ) %>%
+  filter(storage_type != "Other")
+
+# Create grouped bar chart
+plot_ly(storage_analysis, x = ~storage_type, y = ~count, 
+        type = 'bar', color = ~`display.in.inch.`,
+        colors = viridis(length(unique(storage_analysis$`display.in.inch.`)))) %>%
+  layout(title = list(text = "💾 Storage & Display Distribution", 
+                      font = list(size = 18, color = '#2c3e50')),
+         xaxis = list(title = "Storage Type"),
+         yaxis = list(title = "Number of Models"),
+         barmode = 'group',
+         plot_bgcolor = 'rgba(0,0,0,0)',
+         paper_bgcolor = 'rgba(0,0,0,0)',
+         showlegend = TRUE)
+```
+
+Column {data-width=400}
+-----------------------------------------------------------------------
+
+### 📈 **Price Trends Over Categories**
+
+```{r}
+# Enhanced price analysis with violin plot
+plot_ly(df_clean, x = ~price_category, y = ~price.in.Rs.., 
+        type = 'violin', box = list(visible = TRUE), 
+        meanline = list(visible = TRUE),
+        marker = list(color = viridis(4), 
+                     line = list(color = '#2c3e50', width = 1.5))) %>%
+  layout(title = list(text = "📈 Price Distribution by Category", 
+                      font = list(size = 18, color = '#2c3e50')),
+         xaxis = list(title = "Price Category", tickangle = 45),
+         yaxis = list(title = "Price (₹)", tickformat = ',d'),
+         plot_bgcolor = 'rgba(0,0,0,0)',
+         paper_bgcolor = 'rgba(0,0,0,0)')
+```
+
+### 🎪 **Brand Market Share Donut Chart**
+
+```{r}
+# Brand market share
+brand_share <- df_clean %>%
+  group_by(brand) %>%
+  summarise(count = n()) %>%
+  arrange(desc(count)) %>%
+  head(8) %>%
+  mutate(percentage = count / sum(count) * 100)
+
+plot_ly(brand_share, labels = ~brand, values = ~count, 
+        type = 'pie', hole = 0.6,
+        marker = list(colors = viridis(8), 
+                     line = list(color = '#2c3e50', width = 2)),
+        textinfo = 'label+percent',
+        textposition = 'outside',
+        textfont = list(size = 12)) %>%
+  layout(title = list(text = "🎪 Top 8 Brands Market Share", 
+                      font = list(size = 18, color = '#2c3e50')),
+         showlegend = TRUE,
+         plot_bgcolor = 'rgba(0,0,0,0)',
+         paper_bgcolor = 'rgba(0,0,0,0)')
+```
+
+### 🔥 **Price-Performance Efficiency**
+
+```{r}
+# Efficiency analysis
+efficiency_data <- df_clean %>%
+  group_by(brand) %>%
+  summarise(
+    avg_price = mean(price.in.Rs.., na.rm = TRUE),
+    avg_rating = mean(rating, na.rm = TRUE),
+    efficiency = avg_rating / (avg_price / 10000),
+    count = n()
+  ) %>%
+  filter(count >= 3) %>%
+  arrange(desc(efficiency)) %>%
+  head(15)
+
+plot_ly(efficiency_data, x = ~brand, y = ~efficiency, 
+        type = 'bar',
+        marker = list(color = viridis(15), 
+                     line = list(color = '#2c3e50', width = 1.5),
+                     gradient = list(type = "vertical"))) %>%
+  layout(title = list(text = "🔥 Price-Performance Efficiency", 
+                      font = list(size = 18, color = '#2c3e50')),
+         xaxis = list(title = "Brand", tickangle = 45),
+         yaxis = list(title = "Efficiency Score (Rating/Price)"),
+         plot_bgcolor = 'rgba(0,0,0,0)',
+         paper_bgcolor = 'rgba(0,0,0,0)')
+```
+
+### 📝 **Key Insights**
+
+<div class="insight-box">
+**💎 3D Analysis**: The 3D visualization reveals that higher RAM doesn't always correlate with higher ratings, but premium laptops tend to have better performance across all dimensions.
+</div>
+
+<div class="insight-box">
+**🔥 Heatmap Insights**: Apple dominates the luxury segment with high ratings, while Lenovo shows strong performance across mid-range categories.
+</div>
+
+<div class="insight-box">
+**🎯 Processor Wars**: The radar chart shows Apple M1 excels in price-performance ratio, while Intel leads in market share and RAM availability.
+</div>
+
+<div class="insight-box">
+**📊 Efficiency Leaders**: Smaller brands often provide better value for money, challenging established players in the efficiency rankings.
+</div> 

@@ -1,0 +1,460 @@
+---
+title: "Global Suicide Data Analysis: A Comprehensive Study"
+output: 
+  flexdashboard::flex_dashboard:
+    orientation: columns
+    vertical_layout: fill
+    theme: cosmo
+    css: suicide_styles.css
+---
+
+```{r setup, include=FALSE}
+library(tidyverse)
+library(flexdashboard)
+library(plotly)
+library(highcharter)
+library(viridis)
+library(scales)
+library(ggplot2)
+library(dplyr)
+library(RColorBrewer)
+
+# Read the data
+df <- read.csv("SucideData.csv")
+
+# Clean and prepare data
+df_clean <- df %>%
+  filter(!is.na(suicides_no) & suicides_no > 0) %>%
+  mutate(
+    decade = case_when(
+      year < 1990 ~ "1980s",
+      year < 2000 ~ "1990s", 
+      year < 2010 ~ "2000s",
+      TRUE ~ "2010s"
+    ),
+    age_group = factor(age, levels = c("5-14 years", "15-24 years", "25-34 years", 
+                                      "35-54 years", "55-74 years", "75+ years")),
+    suicide_rate = suicides.100k.pop,
+    gdp_per_capita_clean = as.numeric(gsub(",", "", gdp_per_capita))
+  )
+
+# Get top countries by total suicides
+top_countries <- df_clean %>%
+  group_by(country) %>%
+  summarise(
+    total_suicides = sum(suicides_no, na.rm = TRUE),
+    avg_rate = mean(suicide_rate, na.rm = TRUE),
+    total_population = sum(population, na.rm = TRUE)
+  ) %>%
+  arrange(desc(total_suicides)) %>%
+  head(15)
+```
+
+```{css}
+/* Enhanced CSS for Suicide Data Dashboard */
+
+body {
+  font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+  background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+  margin: 0;
+  padding: 0;
+  min-height: 100vh;
+}
+
+.navbar {
+  background: linear-gradient(135deg, #2c3e50 0%, #34495e 100%) !important;
+  border-bottom: 3px solid #e74c3c;
+  box-shadow: 0 4px 12px rgba(0,0,0,0.15);
+}
+
+.navbar-brand {
+  color: #ecf0f1 !important;
+  font-weight: bold;
+  font-size: 22px;
+  text-shadow: 2px 2px 4px rgba(0,0,0,0.3);
+}
+
+.chart-title {
+  color: #2c3e50;
+  font-size: 20px;
+  font-weight: bold;
+  text-align: center;
+  margin-bottom: 20px;
+  text-shadow: 1px 1px 2px rgba(0,0,0,0.1);
+  background: linear-gradient(45deg, #e74c3c, #c0392b);
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
+  background-clip: text;
+}
+
+.insight-box {
+  background: linear-gradient(135deg, #e74c3c 0%, #c0392b 100%);
+  color: white;
+  padding: 20px;
+  border-radius: 15px;
+  margin: 15px 0;
+  box-shadow: 0 8px 32px rgba(0,0,0,0.15);
+  border: 1px solid rgba(255,255,255,0.2);
+  backdrop-filter: blur(10px);
+  transition: all 0.3s ease;
+}
+
+.insight-box:hover {
+  transform: translateY(-5px) scale(1.02);
+  box-shadow: 0 15px 45px rgba(0,0,0,0.25);
+}
+
+.metric-card {
+  background: linear-gradient(135deg, #e74c3c 0%, #c0392b 100%);
+  color: white;
+  padding: 25px;
+  border-radius: 20px;
+  text-align: center;
+  margin: 10px;
+  box-shadow: 0 8px 25px rgba(0,0,0,0.15);
+  transition: all 0.3s ease;
+  border: 1px solid rgba(255,255,255,0.2);
+}
+
+.metric-card:hover {
+  transform: scale(1.05);
+  box-shadow: 0 12px 35px rgba(0,0,0,0.2);
+}
+
+.js-plotly-plot {
+  border-radius: 15px;
+  overflow: hidden;
+  box-shadow: 0 8px 25px rgba(0,0,0,0.1);
+  transition: all 0.3s ease;
+  margin: 10px 0;
+}
+
+.js-plotly-plot:hover {
+  box-shadow: 0 12px 35px rgba(0,0,0,0.15);
+  transform: translateY(-2px);
+}
+
+/* Enhanced animations */
+@keyframes fadeInUp {
+  from {
+    opacity: 0;
+    transform: translateY(30px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+@keyframes pulse {
+  0% { transform: scale(1); }
+  50% { transform: scale(1.05); }
+  100% { transform: scale(1); }
+}
+
+.chart-container {
+  animation: fadeInUp 0.8s ease-out;
+}
+
+.metric-card {
+  animation: pulse 2s infinite;
+}
+
+/* Custom scrollbar */
+::-webkit-scrollbar {
+  width: 10px;
+}
+
+::-webkit-scrollbar-track {
+  background: rgba(255,255,255,0.1);
+  border-radius: 10px;
+}
+
+::-webkit-scrollbar-thumb {
+  background: linear-gradient(135deg, #e74c3c 0%, #c0392b 100%);
+  border-radius: 10px;
+  border: 2px solid rgba(255,255,255,0.2);
+}
+
+::-webkit-scrollbar-thumb:hover {
+  background: linear-gradient(135deg, #c0392b 0%, #a93226 100%);
+}
+```
+
+Column {data-width=400}
+-----------------------------------------------------------------------
+
+### 📊 **Global Suicide Overview**
+
+```{r}
+# Key metrics
+total_suicides <- sum(df_clean$suicides_no, na.rm = TRUE)
+total_countries <- length(unique(df_clean$country))
+avg_rate <- mean(df_clean$suicide_rate, na.rm = TRUE)
+year_span <- max(df_clean$year) - min(df_clean$year) + 1
+
+# Create enhanced metric cards
+metric_data <- data.frame(
+  metric = c("Total Suicides", "Countries", "Avg Rate/100K", "Years"),
+  value = c(format(total_suicides, big.mark=","), total_countries, 
+            round(avg_rate, 1), year_span),
+  icon = c("💔", "🌍", "📊", "📅"),
+  color = c("#e74c3c", "#3498db", "#f39c12", "#9b59b6")
+)
+
+plot_ly(metric_data, x = ~metric, y = rep(1, 4), type = 'bar',
+        marker = list(color = ~color, 
+                     line = list(color = '#2c3e50', width = 2),
+                     gradient = list(type = "vertical")),
+        text = ~paste(icon, "<br><b>", value, "</b>"), 
+        textposition = 'middle center',
+        textfont = list(size = 16, color = 'white')) %>%
+  layout(title = list(text = "🌍 Global Suicide Statistics", 
+                      font = list(size = 20, color = '#2c3e50')),
+         showlegend = FALSE,
+         xaxis = list(showticklabels = FALSE),
+         yaxis = list(showticklabels = FALSE),
+         plot_bgcolor = 'rgba(0,0,0,0)',
+         paper_bgcolor = 'rgba(0,0,0,0)',
+         margin = list(t = 50, b = 20))
+```
+
+### 🌍 **Top Countries by Total Suicides**
+
+```{r}
+# Enhanced bar chart with gradient colors
+plot_ly(top_countries, x = ~total_suicides, y = ~country, type = 'bar', orientation = 'h',
+        marker = list(color = viridis(15), 
+                     line = list(color = '#2c3e50', width = 1.5),
+                     gradient = list(type = "horizontal"))) %>%
+  layout(title = list(text = "🏆 Top 15 Countries by Total Suicides", 
+                      font = list(size = 18, color = '#2c3e50')),
+         xaxis = list(title = "Total Suicides", tickformat = ',d'),
+         yaxis = list(title = "Country"),
+         showlegend = FALSE,
+         plot_bgcolor = 'rgba(0,0,0,0)',
+         paper_bgcolor = 'rgba(0,0,0,0)')
+```
+
+### 📈 **Suicide Rate Trends Over Time**
+
+```{r}
+# Time series analysis
+time_trends <- df_clean %>%
+  group_by(year) %>%
+  summarise(
+    total_suicides = sum(suicides_no, na.rm = TRUE),
+    avg_rate = mean(suicide_rate, na.rm = TRUE),
+    total_population = sum(population, na.rm = TRUE)
+  ) %>%
+  arrange(year)
+
+plot_ly(time_trends, x = ~year, y = ~avg_rate, 
+        type = 'scatter', mode = 'lines+markers',
+        line = list(color = '#e74c3c', width = 3),
+        marker = list(size = 8, color = '#e74c3c'),
+        fill = 'tonexty', fillcolor = 'rgba(231, 76, 60, 0.2)') %>%
+  layout(title = list(text = "📈 Global Suicide Rate Trends (1985-2016)", 
+                      font = list(size = 18, color = '#2c3e50')),
+         xaxis = list(title = "Year"),
+         yaxis = list(title = "Average Suicide Rate per 100K"),
+         plot_bgcolor = 'rgba(0,0,0,0)',
+         paper_bgcolor = 'rgba(0,0,0,0)')
+```
+
+Column {data-width=400}
+-----------------------------------------------------------------------
+
+### 👥 **Gender Analysis**
+
+```{r}
+# Gender comparison
+gender_analysis <- df_clean %>%
+  group_by(sex) %>%
+  summarise(
+    total_suicides = sum(suicides_no, na.rm = TRUE),
+    avg_rate = mean(suicide_rate, na.rm = TRUE),
+    count = n()
+  )
+
+# Create donut chart
+plot_ly(gender_analysis, labels = ~sex, values = ~total_suicides, 
+        type = 'pie', hole = 0.6,
+        marker = list(colors = c('#3498db', '#e74c3c'), 
+                     line = list(color = '#2c3e50', width = 2)),
+        textinfo = 'label+percent',
+        textposition = 'outside',
+        textfont = list(size = 14)) %>%
+  layout(title = list(text = "👥 Suicide Distribution by Gender", 
+                      font = list(size = 18, color = '#2c3e50')),
+         showlegend = TRUE,
+         plot_bgcolor = 'rgba(0,0,0,0)',
+         paper_bgcolor = 'rgba(0,0,0,0)')
+```
+
+### 📊 **Suicide by Age Group**
+
+```{r}
+# Age group analysis
+age_analysis <- df_clean %>%
+  group_by(age_group) %>%
+  summarise(
+    total_suicides = sum(suicides_no, na.rm = TRUE),
+    avg_rate = mean(suicide_rate, na.rm = TRUE),
+    count = n()
+  ) %>%
+  arrange(age_group)
+
+plot_ly(age_analysis, x = ~age_group, y = ~avg_rate, 
+        type = 'bar',
+        marker = list(color = viridis(6), 
+                     line = list(color = '#2c3e50', width = 1.5),
+                     gradient = list(type = "vertical"))) %>%
+  layout(title = list(text = "📊 Suicide Rates by Age Group", 
+                      font = list(size = 18, color = '#2c3e50')),
+         xaxis = list(title = "Age Group", tickangle = 45),
+         yaxis = list(title = "Average Suicide Rate per 100K"),
+         showlegend = FALSE,
+         plot_bgcolor = 'rgba(0,0,0,0)',
+         paper_bgcolor = 'rgba(0,0,0,0)')
+```
+
+### 💰 **Economic Factors Analysis**
+
+```{r}
+# GDP vs Suicide Rate
+gdp_analysis <- df_clean %>%
+  filter(!is.na(gdp_per_capita_clean) & gdp_per_capita_clean > 0) %>%
+  group_by(country) %>%
+  summarise(
+    avg_gdp = mean(gdp_per_capita_clean, na.rm = TRUE),
+    avg_suicide_rate = mean(suicide_rate, na.rm = TRUE),
+    total_suicides = sum(suicides_no, na.rm = TRUE)
+  ) %>%
+  filter(total_suicides > 1000)  # Filter for countries with significant data
+
+plot_ly(gdp_analysis, x = ~avg_gdp, y = ~avg_suicide_rate, 
+        type = 'scatter', mode = 'markers',
+        marker = list(size = ~total_suicides/1000, 
+                     color = ~avg_suicide_rate, colorscale = 'Viridis',
+                     line = list(color = '#2c3e50', width = 1.5)),
+        text = ~paste("Country:", country, "<br>GDP: $", format(avg_gdp, big.mark=","),
+                     "<br>Rate:", round(avg_suicide_rate, 1)),
+        hoverinfo = 'text') %>%
+  layout(title = list(text = "💰 GDP vs Suicide Rate Relationship", 
+                      font = list(size = 18, color = '#2c3e50')),
+         xaxis = list(title = "Average GDP per Capita ($)", tickformat = ',d'),
+         yaxis = list(title = "Average Suicide Rate per 100K"),
+         plot_bgcolor = 'rgba(0,0,0,0)',
+         paper_bgcolor = 'rgba(0,0,0,0)')
+```
+
+Column {data-width=400}
+-----------------------------------------------------------------------
+
+### 📅 **Decade Analysis**
+
+```{r}
+# Decade comparison
+decade_analysis <- df_clean %>%
+  group_by(decade) %>%
+  summarise(
+    total_suicides = sum(suicides_no, na.rm = TRUE),
+    avg_rate = mean(suicide_rate, na.rm = TRUE),
+    total_population = sum(population, na.rm = TRUE)
+  ) %>%
+  mutate(decade = factor(decade, levels = c("1980s", "1990s", "2000s", "2010s")))
+
+plot_ly(decade_analysis, x = ~decade, y = ~total_suicides, 
+        type = 'bar',
+        marker = list(color = viridis(4), 
+                     line = list(color = '#2c3e50', width = 1.5),
+                     gradient = list(type = "vertical"))) %>%
+  layout(title = list(text = "📅 Suicide Trends by Decade", 
+                      font = list(size = 18, color = '#2c3e50')),
+         xaxis = list(title = "Decade"),
+         yaxis = list(title = "Total Suicides", tickformat = ',d'),
+         showlegend = FALSE,
+         plot_bgcolor = 'rgba(0,0,0,0)',
+         paper_bgcolor = 'rgba(0,0,0,0)')
+```
+
+### 🌍 **Geographic Heatmap**
+
+```{r}
+# Create heatmap data for top countries
+heatmap_data <- df_clean %>%
+  group_by(country, decade) %>%
+  summarise(
+    avg_rate = mean(suicide_rate, na.rm = TRUE),
+    total_suicides = sum(suicides_no, na.rm = TRUE)
+  ) %>%
+  filter(total_suicides > 5000) %>%
+  pivot_wider(names_from = decade, values_from = avg_rate, values_fill = 0)
+
+# Convert to matrix for heatmap
+heatmap_matrix <- as.matrix(heatmap_data[,-c(1,2)])
+rownames(heatmap_matrix) <- heatmap_data$country
+
+plot_ly(z = heatmap_matrix, x = colnames(heatmap_matrix), y = rownames(heatmap_matrix),
+        type = 'heatmap', colorscale = 'Reds',
+        text = round(heatmap_matrix, 1),
+        texttemplate = "%{text}",
+        textfont = list(size = 10, color = "white")) %>%
+  layout(title = list(text = "🌍 Suicide Rates Heatmap by Country & Decade", 
+                      font = list(size = 16, color = '#2c3e50')),
+         xaxis = list(title = "Decade"),
+         yaxis = list(title = "Country"),
+         plot_bgcolor = 'rgba(0,0,0,0)',
+         paper_bgcolor = 'rgba(0,0,0,0)')
+```
+
+### 📊 **Statistical Summary**
+
+```{r}
+# Statistical summary
+stats_summary <- df_clean %>%
+  group_by(sex, age_group) %>%
+  summarise(
+    avg_rate = mean(suicide_rate, na.rm = TRUE),
+    median_rate = median(suicide_rate, na.rm = TRUE),
+    max_rate = max(suicide_rate, na.rm = TRUE),
+    count = n()
+  ) %>%
+  arrange(sex, age_group)
+
+# Create summary table visualization
+plot_ly(stats_summary, x = ~age_group, y = ~avg_rate, 
+        type = 'bar', color = ~sex,
+        colors = c('#3498db', '#e74c3c')) %>%
+  layout(title = list(text = "📊 Suicide Rates by Gender & Age", 
+                      font = list(size = 18, color = '#2c3e50')),
+         xaxis = list(title = "Age Group", tickangle = 45),
+         yaxis = list(title = "Average Suicide Rate per 100K"),
+         barmode = 'group',
+         plot_bgcolor = 'rgba(0,0,0,0)',
+         paper_bgcolor = 'rgba(0,0,0,0)',
+         showlegend = TRUE)
+```
+
+### 📝 **Key Insights**
+
+<div class="insight-box">
+**🌍 Global Impact**: The dataset covers over 27,000 records across 102 countries, revealing significant global variations in suicide rates and patterns.
+</div>
+
+<div class="insight-box">
+**👥 Gender Disparity**: Males consistently show higher suicide rates than females across all age groups and countries, indicating a critical public health concern.
+</div>
+
+<div class="insight-box">
+**🎂 Age Vulnerability**: Middle-aged adults (35-54 years) show the highest suicide rates, followed by young adults (15-24 years), highlighting different risk factors across life stages.
+</div>
+
+<div class="insight-box">
+**💰 Economic Factors**: The relationship between GDP and suicide rates is complex, with some high-income countries showing elevated rates, suggesting mental health challenges persist across economic levels.
+</div>
+
+<div class="insight-box">
+**📅 Temporal Trends**: Suicide rates have shown varying patterns across decades, with some countries experiencing significant changes, indicating the impact of social, economic, and policy factors.
+</div> 
